@@ -186,8 +186,9 @@ void check_mouse(XEvent *e)
 		savey = my;
     if (g.grabbed_point >=0 ) {
       if (g.rigid) {
+        /*
         //put in loop to talk to each point
-        //make a vector **Issue with rounding**
+        //make a vector
         //move 2 points at same time if rigid is on
         double v[2];
         v[0] = g.point[1].x - g.point[0].x;
@@ -209,6 +210,34 @@ void check_mouse(XEvent *e)
 
 
        // g.point[g.grabbed_point+1].y = my + v[1];
+       */
+
+        //make a vector
+        //move 2 points at same time if rigid is on
+        double v[2];
+        double v1[2];
+        double tempLen = 0;
+        for (int i = 0; i < g.npoints; i++) {
+          v[0] = g.point[1].x - g.point[0].x;
+          v[1] = g.point[1].y - g.point[0].y;
+          double vlen = sqrt(v[0]*v[0] + v[1]*v[1]);
+          g.point[g.grabbed_point].x = mx;
+          g.point[g.grabbed_point].y = my;
+
+          v1[0] = g.point[g.grabbed_point+1].x - mx;
+          v1[1] = g.point[g.grabbed_point+1].y - my;
+          double len = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
+          //normalize vector size
+          //before changing points, save the lengths between all the points
+          v1[0] /= len;
+          v1[1] /= len;
+          v1[0] *= vlen;
+          v1[1] *= vlen;
+          //use tempLen for the value of the orginal  
+          tempLen = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
+          g.point[g.grabbed_point+1].x = mx + v1[0];
+          g.point[g.grabbed_point+1].y = my + v1[1];
+        }
 
       } else {
 

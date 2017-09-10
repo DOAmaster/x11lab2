@@ -134,6 +134,13 @@ int main(void)
 	return 0;
 }
 
+void deletePoint() 
+{
+	if(g.npoints > 0){
+		g.npoints--;
+	}
+}
+
 
 void makePerpendicular(double v1[1], double v2[1])
 {
@@ -149,40 +156,40 @@ void perp()
 	//checks for max points before prevent overflow
 	if(g.npoints < MAX_POINTS) {
 
-	double v[2];
-	v[0] = g.point[1].x - g.point[0].x;
-	v[1] = g.point[1].y - g.point[0].y;
-	double vlen = sqrt(v[0]*v[0] + v[1]*v[1]);
+		double v[2];
+		v[0] = g.point[1].x - g.point[0].x;
+		v[1] = g.point[1].y - g.point[0].y;
+		double vlen = sqrt(v[0]*v[0] + v[1]*v[1]);
 
-//	g.point[g.grabbed_point].x = mx;
-//	g.point[g.grabbed_point].y = my;
-	double v1[2];
-	v1[0] = g.point[g.grabbed_point + 1].x - g.point[g.grabbed_point].x;
-	v1[1] = g.point[g.grabbed_point + 1].y - g.point[g.grabbed_point].y;
-	double len = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
+		double v1[2];
+		v1[0] = g.point[g.grabbed_point + 1].x - g.point[g.grabbed_point].x;
+		v1[1] = g.point[g.grabbed_point + 1].y - g.point[g.grabbed_point].y;
+		double len = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
 	
-//	makePerpendicular(&v[2], &v1[2]);
-       	 //normalize vector size
-	v1[0] /= len;
-	v1[1] /= len;
-	v1[0] *= vlen;
-	v1[1] *= vlen;
+       	 	//normalize vector size
+		v1[0] /= len;
+		v1[1] /= len;
+		v1[0] *= vlen;
+		v1[1] *= vlen;
 
-	printf("v1[1]: %lf \n", v1[1]);
-	makePerpendicular(&v[1], &v1[1]);
+		printf("v1[1]: %lf \n", v1[1]);
+		
+		double temp = v1[1]; 
+		printf("temp: %lf \n", temp);
+		v1[0] = v[1];
+		v1[1] = -v[0];
 
-	g.point[g.grabbed_point].x =  v1[0];
-	g.point[g.grabbed_point].y =  v1[1];
+		printf("v1[1]: %lf \n", v1[1]);
+		//makePerpendicular(&v[1], &v1[1]);
 
+		g.point[g.grabbed_point].x =  v1[0]+len;
+		g.point[g.grabbed_point].y =  v1[1]+len;
 
-
-	//given function pass vector
-	//makePerpendicular(v1[2], v2[2]);
-
-	//creates a new point at location add to count
-	g.point[g.npoints].x = g.point[g.grabbed_point].x;
-	g.point[g.npoints].y = g.point[g.grabbed_point].y;
-	++g.npoints;
+		//creates a new point at location add to count
+		g.point[g.npoints].x = g.point[g.grabbed_point].x;
+		g.point[g.npoints].y = g.point[g.grabbed_point].y;
+		++g.npoints;
+		
 
 	}
 
@@ -300,6 +307,9 @@ int check_keys(XEvent *e)
       break;
      	case XK_p:
      	 perp();
+	 break;
+	case XK_d:
+	deletePoint();
       break;
 	case XK_Escape:
 		//program is ending
@@ -345,12 +355,13 @@ void render(void)
 	x11.drawText(4, 20, "Right-click to place a point.");
 	x11.drawText(4, 32, "L toggle lines");
 	x11.drawText(4, 44, "A toggle anchors");
-	x11.drawText(4, 56, "R rigid lines.");
+	x11.drawText(4, 56, "R rigid line");
 	x11.drawText(4, 68, (g.rigid) ? "rigid ON" : "rigid OFF");
 	x11.drawText(4, 80, (g.anchor) ? "anchor ON" : "anchor OFF");
 	x11.drawText(4, 92, "P add perpendicular segment");
+	x11.drawText(4, 104, "D remove point");
 	x11.setColor3i(255, 0, 0);
-	x11.drawLine(100, 100, 200, 240);
+//	x11.drawLine(100, 100, 200, 240);
 	drawAllLines();
 }
 

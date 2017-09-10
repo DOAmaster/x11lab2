@@ -26,17 +26,19 @@ struct Point {
 class Global {
 public:
 	int xres, yres;
-  Point point[MAX_POINTS];
-  int npoints;
-  int grabbed_point;
-  bool rigid;
+	Point point[MAX_POINTS];
+	int npoints;
+	int grabbed_point;
+	bool rigid;
+	int  anchor;
 	Global() {
 		srand((unsigned)time(NULL));
 		xres = 800;
 		yres = 600;
-    npoints = 0;
-    grabbed_point = -1;
-    rigid = false;
+		npoints = 0;
+ 		grabbed_point = -1;
+		rigid = false;
+		anchor = 1;
 	}
 } g;
 
@@ -55,7 +57,7 @@ public:
 		int scr = DefaultScreen(dpy);
 		win = XCreateSimpleWindow(dpy, RootWindow(dpy, scr), 1, 1,
 			g.xres, g.yres, 0, 0x00ffffff, 0x00000000);
-		XStoreName(dpy, win, "X11 sample program");
+		XStoreName(dpy, win, "x11lab2");
 		gc = XCreateGC(dpy, win, 0, NULL);
 		XMapWindow(dpy, win);
 		XSelectInput(dpy, win, ExposureMask | StructureNotifyMask |
@@ -132,6 +134,60 @@ int main(void)
 	return 0;
 }
 
+
+void makePerpendicular(double v1[1], double v2[1])
+{
+	v2[0] = v1[1];
+	v2[1] = -v1[0];
+	double temp = v2[1];
+	printf("v2 [2]: %lf", temp);
+
+}
+
+void perp()
+{
+	//checks for max points before prevent overflow
+	if(g.npoints < MAX_POINTS) {
+
+	double v[2];
+	v[0] = g.point[1].x - g.point[0].x;
+	v[1] = g.point[1].y - g.point[0].y;
+	double vlen = sqrt(v[0]*v[0] + v[1]*v[1]);
+
+//	g.point[g.grabbed_point].x = mx;
+//	g.point[g.grabbed_point].y = my;
+	double v1[2];
+	v1[0] = g.point[g.grabbed_point + 1].x - g.point[g.grabbed_point].x;
+	v1[1] = g.point[g.grabbed_point + 1].y - g.point[g.grabbed_point].y;
+	double len = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
+	
+//	makePerpendicular(&v[2], &v1[2]);
+       	 //normalize vector size
+	v1[0] /= len;
+	v1[1] /= len;
+	v1[0] *= vlen;
+	v1[1] *= vlen;
+
+	printf("v1[1]: %lf \n", v1[1]);
+	makePerpendicular(&v[1], &v1[1]);
+
+	g.point[g.grabbed_point].x =  v1[0];
+	g.point[g.grabbed_point].y =  v1[1];
+
+
+
+	//given function pass vector
+	//makePerpendicular(v1[2], v2[2]);
+
+	//creates a new point at location add to count
+	g.point[g.npoints].x = g.point[g.grabbed_point].x;
+	g.point[g.npoints].y = g.point[g.grabbed_point].y;
+	++g.npoints;
+
+	}
+
+}
+
 void check_mouse(XEvent *e)
 {
 	static int savex = 0;
@@ -147,11 +203,12 @@ void check_mouse(XEvent *e)
 	if (e->type == ButtonPress) {
 		//A mouse button was pressed.
 		if (e->xbutton.button==1) {
-			//Left button pressed
+	//Left button pressed
       //drag a point
       //find closest point to mouse
       double close_dist = 9e9;
       int close_idx;
+      if(g.npoints > 0) {
       for (int i=0; i <g.npoints; i++) {
         double d0 = mx - g.point[i].x;
         double d1 = my - g.point[i].y;
@@ -160,19 +217,20 @@ void check_mouse(XEvent *e)
           close_dist = dist;
           close_idx = i;
         }
+     
 
 
       }
       //we have closest point to mouse.
       g.grabbed_point = close_idx;
 
-
+      }
 
 
 		}
 		if (e->xbutton.button==3) {
-			//Right button pressed
-      //checks if npoints has room then add points by cursor
+	//Right button pressed
+	//checks if npoints has room then add points by cursor
       if ( g.npoints < MAX_POINTS) {
           g.point[g.npoints].x = mx;
           g.point[g.npoints].y = my;
@@ -189,31 +247,33 @@ void check_mouse(XEvent *e)
         //put in loop to talk to each point
         //make a vector **Issue with rounding**
         //move 2 points at same time if rigid is on
-        double v[2];
-        v[0] = g.point[1].x - g.point[0].x;
-        v[1] = g.point[1].y - g.point[0].y;
-        double vlen = sqrt(v[0]*v[0] + v[1]*v[1]);
-        g.point[g.grabbed_point].x = mx;
-        g.point[g.grabbed_point].y = my;
-        double v1[2];
-        v1[0] = g.point[g.grabbed_point+1].x - mx;
-        v1[1] = g.point[g.grabbed_point+1].y - my;
-        double len = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
-        //normalize vector size
-        v1[0] /= len;
-        v1[1] /= len;
-        v1[0] *= vlen;
-        v1[1] *= vlen;
-        g.point[g.grabbed_point+1].x = mx + v1[0];
-        g.point[g.grabbed_point+1].y = my + v1[1];
+	for(int i = 0; i < g.npoints; i++) {
+		double v[2];
+		v[0] = g.point[1].x - g.point[0].x;
+		v[1] = g.point[1].y - g.point[0].y;
+		double vlen = sqrt(v[0]*v[0] + v[1]*v[1]);
+		g.point[g.grabbed_point].x = mx;
+		g.point[g.grabbed_point].y = my;
+		double v1[2];
+		v1[0] = g.point[g.grabbed_point+1].x - mx;
+		v1[1] = g.point[g.grabbed_point+1].y - my;
+		double len = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
+       		 //normalize vector size
+		v1[0] /= len;
+		v1[1] /= len;
+		v1[0] *= vlen;
+		v1[1] *= vlen;
+		g.point[g.grabbed_point+1].x = mx + v1[0];
+		g.point[g.grabbed_point+1].y = my + v1[1];
+	}
 
 
        // g.point[g.grabbed_point+1].y = my + v[1];
 
       } else {
 
-      g.point[g.grabbed_point].x = mx;
-      g.point[g.grabbed_point].y = my;
+	g.point[g.grabbed_point].x = mx;
+	g.point[g.grabbed_point].y = my;
       }
     }
 	}
@@ -226,20 +286,24 @@ int check_keys(XEvent *e)
 	if (e->type != KeyPress && e->type != KeyRelease)
 		return 0;
 	int key = XLookupKeysym(&e->xkey, 0);
-	switch (key) {
-		case XK_a:
-			// do something
-			break;
-    case XK_r:
+	switch (key) {	
+
+	case XK_r:
       //toggle rigid
       if (g.rigid == true)
         g.rigid = false;
       else
         g.rigid = true;
       break;
-		case XK_Escape:
-			//program is ending
-			return 1;
+	case XK_a:
+	 g.anchor ^= 1;
+      break;
+     	case XK_p:
+     	 perp();
+      break;
+	case XK_Escape:
+		//program is ending
+	return 1;
 	}
 	return 0;
 }
@@ -252,10 +316,12 @@ void physics(void)
 void drawAllPoints(int size) {
   x11.setColor3i(255, 255, 255);
   //size is doubled to fit in square
-  for (int i = 0; i < g.npoints; i++) {
-      //x11.drawPixel(g.point[i].x, g.point[i].y);
-      x11.fillRectangle(g.point[i].x-size, g.point[i].y-size, size*2+1, size*2+1);
+  if (g.anchor == 1) {
+  	for (int i = 0; i < g.npoints; i++) {
+     		//x11.drawPixel(g.point[i].x, g.point[i].y);
+      		x11.fillRectangle(g.point[i].x-size, g.point[i].y-size, size*2+1, size*2+1);
 
+  	}
   }
 
 }
@@ -269,20 +335,23 @@ void drawAllLines() {
   }
 }
 
+
 void render(void)
 {
   x11.clear_screen();
 	//render function is always at the bottom of program.
 	x11.setColor3i(255, 255, 255);
+	x11.drawText(4, 8,  "Left-click to drag point.");
 	x11.drawText(4, 20, "Right-click to place a point.");
-	x11.drawText(4, 32, "Press L to toggle lines.");
-	x11.drawText(4, 44, "Press B to toggle Bresenham lines.");
-	x11.drawText(4, 56, "Press R for rigid lines.");
+	x11.drawText(4, 32, "L toggle lines");
+	x11.drawText(4, 44, "A toggle anchors");
+	x11.drawText(4, 56, "R rigid lines.");
 	x11.drawText(4, 68, (g.rigid) ? "rigid ON" : "rigid OFF");
+	x11.drawText(4, 80, (g.anchor) ? "anchor ON" : "anchor OFF");
+	x11.drawText(4, 92, "P add perpendicular segment");
 	x11.setColor3i(255, 0, 0);
 	x11.drawLine(100, 100, 200, 240);
- // drawAllPoints(4);
-  drawAllLines();
+	drawAllLines();
 }
 
 
